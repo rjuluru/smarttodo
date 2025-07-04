@@ -1,0 +1,2451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo List App</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 25px;
+      margin-top: 20px;
+      border-top: 4px solid #3A6EA5;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2c5282;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.05);
+      position: relative;
+      padding-bottom: 12px;
+    }
+    
+    h1:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(to right, #3A6EA5, #63b3ed);
+      border-radius: 2px;
+    }
+
+    h2 {
+      color: #2c5282; /* Match h1 color */
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    h3 {
+      color: #2c5282; /* Match h1 color */
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #4299e1, #3182ce);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      box-shadow: 0 2px 5px rgba(49, 130, 206, 0.3);
+    }
+    
+    /* Elegant teal color for main action buttons */
+    #todo-form .btn,
+    #edit-form .btn {
+      background: linear-gradient(135deg, #3A6EA5, #2c5282);
+      transition: all 0.3s ease;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      box-shadow: 0 3px 8px rgba(44, 82, 130, 0.25);
+    }
+    
+    #todo-form .btn:hover,
+    #edit-form .btn:hover {
+      background: linear-gradient(135deg, #2c5282, #2b6cb0);
+      box-shadow: 0 5px 12px rgba(44, 82, 130, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(49, 130, 206, 0.4);
+    }
+
+    .btn-block {
+      display: block;
+      width: 100%;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeInBottom {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(50px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes completedPulse {
+      0% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+      100% { opacity: 0.7; transform: scale(1); }
+    }
+    
+    .todo {
+      background: linear-gradient(to right, rgba(255,255,255,0.9), #fff);
+      margin: 15px 0;
+      padding: 18px;
+      border-radius: 10px;
+      border-left: 5px solid #007bff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+    
+    .todo:hover {
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+    
+    .todo-new {
+      animation: fadeIn 0.6s ease-out forwards;
+    }
+    
+    .todo-edited {
+      animation: slideIn 0.5s ease-out forwards;
+    }
+    
+    .todo-completing {
+      animation: pulse 0.6s ease-in-out;
+    }
+    
+    .todo-completed-new {
+      animation: fadeInBottom 0.7s ease-out forwards;
+    }
+    
+    .todo-uncompleting {
+      animation: completedPulse 0.6s ease-in-out;
+    }
+
+    .todo.completed {
+      opacity: 0.7;
+    }
+    
+    /* Maintain priority colors but make them more muted for completed todos */
+    .todo.completed {
+      opacity: 0.7;
+      background-color: #f8f9fa;
+    }
+    
+    .todo.completed.low-priority {
+      border-left-color: rgba(0, 123, 255, 0.6) !important; /* Muted blue */
+    }
+    
+    .todo.completed.medium-priority {
+      border-left-color: rgba(253, 126, 20, 0.6) !important; /* Muted orange */
+    }
+    
+    .todo.completed.high-priority {
+      border-left-color: rgba(220, 53, 69, 0.6) !important; /* Muted red */
+    }
+    
+    .todo.completed.immediate-priority {
+      border-left-color: rgba(156, 39, 176, 0.6) !important; /* Muted purple */
+    }
+    
+    .todo.completed .todo-meta {
+      color: #8a8a8a;
+    }
+    
+    /* Adjust colors for completed todos to be more muted but still distinct */
+    .todo.completed .due-date {
+      color: #90cdf4; /* Lighter blue */
+    }
+    
+    .todo.completed .importance-score {
+      color: #d6bcfa; /* Lighter purple */
+    }
+    
+    .todo.completed .estimated-time {
+      color: #fbd38d; /* Lighter orange */
+    }
+    
+    .todo.completed .created-at {
+      color: #a0aec0; /* Lighter gray */
+    }
+    
+    .todo.completed h3 {
+      color: #4a5568;
+      text-decoration: line-through;
+      text-decoration-color: rgba(0,0,0,0.3);
+      text-decoration-thickness: 1px;
+    }
+    
+    .form-card {
+      background: linear-gradient(to bottom right, #ffffff, #f7fafc);
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      padding: 25px;
+      margin-bottom: 30px;
+      transition: all 0.3s ease;
+      border-left: 4px solid #4299e1;
+    }
+    
+    .form-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .form-card h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #2c5282; /* Match h1 color */
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      position: relative;
+      display: inline-block;
+      padding-bottom: 8px;
+    }
+    
+    .form-card h2:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 40px;
+      height: 2px;
+      background: linear-gradient(to right, #4299e1, #63b3ed);
+      border-radius: 2px;
+    }
+
+    .todo.low-priority {
+      border-left-color: #007bff; /* Blue */
+    }
+    
+    .todo.medium-priority {
+      border-left-color: #fd7e14; /* Orange */
+    }
+    
+    .todo.immediate-priority {
+      border-left-color: #9c27b0; /* Purple */
+    }
+    
+    .todo.high-priority {
+      border-left-color: #dc3545; /* Red */
+    }
+    
+    .todo.suggested, .todo.immediate-task, .todo.overdue-task {
+      position: relative;
+    }
+    
+    .todo.suggested::after {
+      content: 'SUGGESTED';
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: #28a745;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+    
+    .todo.immediate-task::after {
+      content: 'IMMEDIATE';
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: #9c27b0;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+    
+    .todo.overdue-task::after {
+      content: 'OVERDUE';
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: #dc3545;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+
+    .todo h3 {
+      margin-bottom: 5px;
+      color: #2c5282; /* Match h1 color */
+      font-weight: 500;
+    }
+
+    .todo-meta {
+      display: flex;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: #6c757d;
+      margin-top: 10px;
+      gap: 10px 20px; /* row-gap column-gap */
+    }
+    
+    /* Font colors for different sections in todo cards */
+    .todo .priority-increased {
+      color: #e53e3e; /* Vibrant red for priority increased */
+      font-weight: 600;
+    }
+    
+    .todo .due-date {
+      color: #3182ce; /* Vibrant blue for due dates */
+      font-weight: 500;
+    }
+    
+    .todo .created-at {
+      color: #718096; /* Slate gray for creation date */
+      font-style: italic;
+    }
+    
+    .todo .completed-at {
+      color: #38a169 !important; /* Vibrant green for completion date */
+      font-weight: 500;
+    }
+    
+    .todo .importance-score {
+      color: #805ad5; /* Vibrant purple for importance score */
+      font-weight: 600;
+    }
+    
+    .todo .estimated-time {
+      color: #dd6b20; /* Vibrant orange for estimated time */
+      font-weight: 500;
+    }
+    
+    /* Priority-specific text colors */
+    .todo.immediate-priority .priority {
+      color: #9c27b0; /* Purple for immediate priority */
+      font-weight: 600;
+    }
+    
+    .todo.high-priority .priority {
+      color: #e53e3e; /* Red for high priority */
+      font-weight: 600;
+    }
+    
+    .todo.medium-priority .priority {
+      color: #dd6b20; /* Orange for medium priority */
+      font-weight: 600;
+    }
+    
+    .todo.low-priority .priority {
+      color: #3182ce; /* Blue for low priority */
+      font-weight: 600;
+    }
+    
+    .todo .due-hours {
+      font-weight: 600;
+      background-color: #f0f4f8;
+      padding: 3px 8px;
+      border-radius: 4px;
+      color: #2d3748;
+    }
+    
+    .todo .due-hours.urgent {
+      color: #7b341e; /* Darker orange for better contrast */
+      background-color: #fffaf0; /* Light orange background */
+      border: 1px solid #fbd38d;
+    }
+    
+    .todo .due-hours.overdue {
+      color: #fff; /* White text */
+      background-color: #e53e3e; /* Red background */
+      border: 1px solid #c53030;
+    }
+
+    .todo-meta div {
+      margin-right: 0;
+      white-space: nowrap;
+      padding: 3px 8px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      border-left: 3px solid #dee2e6;
+    }
+
+    .todo-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .todo-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .checkbox-container {
+      margin-right: 15px;
+      position: relative;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    
+    .tick-mark {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 2px solid #3A6EA5;
+      border-radius: 50%;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .tick-mark:hover {
+      background-color: rgba(58, 110, 165, 0.1);
+    }
+    
+    .todo.completed .tick-mark {
+      background-color: #3A6EA5;
+    }
+    
+    .todo.completed .tick-mark::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .form-row > div {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .desktop-row {
+      flex-wrap: wrap;
+    }
+    
+    .priority-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      min-height: 38px; /* Match height of text inputs */
+    }
+    
+    .priority-buttons .priority-row {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .priority-btn {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      text-align: center;
+      font-size: 14px;
+      min-width: 80px;
+      margin: 0 2px;
+    }
+    
+    .priority-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+    
+    .priority-btn.selected {
+      transform: scale(1.05);
+      box-shadow: 0 0 8px rgba(0,0,0,0.4);
+      font-weight: bold;
+    }
+    
+    .priority-btn.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 2px;
+      right: 5px;
+      font-size: 10px;
+    }
+    
+    .priority-btn.immediate {
+      background-color: #9c27b0; /* Purple */
+      color: white;
+    }
+    
+    .priority-btn.high {
+      background-color: #dc3545; /* Red */
+      color: white;
+    }
+    
+    .priority-btn.medium {
+      background-color: #fd7e14; /* Orange */
+      color: white;
+    }
+    
+    .priority-btn.low {
+      background-color: #007bff; /* Blue */
+      color: white;
+    }
+    
+    .time-inputs,
+    .time-inputs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .time-input-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    
+    .time-input-container input {
+      width: 60px;
+      margin-right: 5px;
+    }
+    
+    .estimated-time-group {
+      min-width: 200px;
+      max-width: 100%;
+    }
+    
+    .datetime-inputs input[type="date"] {
+      flex: 2;
+    }
+    
+    .datetime-inputs input[type="time"] {
+      flex: 1;
+    }
+    
+    .time-label {
+      font-size: 14px;
+      color: #6c757d;
+    }
+    
+    @media (min-width: 768px) {
+      .desktop-row {
+        flex-wrap: nowrap;
+      }
+      
+      .desktop-row > div {
+        min-width: auto;
+      }
+    }
+
+    #loading-message {
+      text-align: center;
+      margin: 20px 0;
+      display: none;
+    }
+    
+    .due-hours {
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      display: inline-block;
+      background-color: #f0f4f8;
+      color: #2d3748;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    .due-hours.urgent {
+      background-color: #fffaf0;
+      color: #7b341e;
+      border: 1px solid #fbd38d;
+    }
+    
+    .due-hours.overdue {
+      background-color: #e53e3e;
+      color: white;
+      font-weight: 600;
+      border: 1px solid #c53030;
+    }
+    
+    .due-hours.no-deadline {
+      background-color: #718096;
+      color: white;
+    }
+    
+    .priority-increased {
+      font-weight: bold;
+      color: #dc3545;
+    }
+    
+    .data-management-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    @media (max-width: 768px) {
+      .data-management-buttons {
+        justify-content: center;
+      }
+    }
+    
+    .action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #264653; /* Dark blue-green */
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 120px;
+      text-align: center;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    
+    .action-btn:hover {
+      background-color: #1A323C;
+      transform: translateY(-2px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    }
+    
+    /* JSON-related buttons */
+    #export-json, #import-json, #show-json {
+      background-color: #457B9D; /* Medium blue */
+    }
+    
+    #export-json:hover, #import-json:hover, #show-json:hover {
+      background-color: #366985;
+    }
+    
+    .action-btn.danger {
+      background-color: #E76F51; /* Coral */
+    }
+    
+    .action-btn.danger:hover {
+      background-color: #D05A3C;
+    }
+    
+    .action-btn.warning {
+      background-color: #E9C46A; /* Yellow */
+      color: #333;
+    }
+    
+    .action-btn.warning:hover {
+      background-color: #DDB957;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      overflow: auto;
+    }
+    
+    .modal-content {
+      background-color: #fff;
+      margin: 5% auto;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
+      width: 90%;
+    }
+    
+    .modal h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    
+    .modal .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .modal label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    .modal input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.2s;
+      margin-top: -10px;
+    }
+    
+    .close:hover {
+      color: #333;
+    }
+
+    .todos-list {
+      margin-top: 10px;
+    }
+
+    .completed-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 30px;
+    }
+    
+    .toggle-btn {
+      background: linear-gradient(135deg, #4299e1, #3182ce);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .toggle-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+    
+    .toggle-btn .hide-text {
+      display: none;
+    }
+    
+    .toggle-btn.active .show-text {
+      display: none;
+    }
+    
+    .toggle-btn.active .hide-text {
+      display: inline;
+    }
+    
+    #completed-todos.collapsed {
+      display: none;
+    }
+    
+    .completed-header {
+      margin: 0;
+    }
+
+    .importance-info {
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+    
+    .importance-info h3 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      color: #495057;
+    }
+    
+    .importance-info ul {
+      padding-left: 20px;
+      margin: 10px 0;
+    }
+    
+    .importance-info li {
+      margin-bottom: 5px;
+    }
+    
+    @media (max-width: 600px) {
+      .form-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Todo List</h1>
+    
+    <div class="form-card">
+      <h2>Create New Todo</h2>
+      <form id="todo-form">
+        <div class="form-group">
+          <input type="text" id="todo-text" placeholder="Add a new todo..." required>
+        </div>
+        
+        <div class="form-row desktop-row">
+          <div class="form-group due-datetime-group">
+            <label>Due Date & Time:</label>
+            <div class="datetime-inputs">
+              <input type="date" id="due-date">
+              <input type="time" id="due-time" value="17:00" style="display: none;">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Priority:</label>
+            <div class="priority-buttons" id="priority-buttons">
+              <div class="priority-row">
+                <button type="button" class="priority-btn immediate" data-priority="0">Immediate</button>
+                <button type="button" class="priority-btn high" data-priority="1">High</button>
+              </div>
+              <div class="priority-row">
+                <button type="button" class="priority-btn medium" data-priority="2">Medium</button>
+                <button type="button" class="priority-btn low selected" data-priority="3">Low</button>
+              </div>
+              <input type="hidden" id="priority" value="3">
+            </div>
+          </div>
+          
+          <div class="form-group estimated-time-group">
+            <label>Estimated Duration:</label>
+            <div class="time-inputs">
+              <div class="time-input-container">
+                <input type="number" id="estimated-days" min="0" value="0" required>
+                <span class="time-label">days</span>
+              </div>
+              <div class="time-input-container">
+                <input type="number" id="estimated-hours" min="0" max="23" value="0" required>
+                <span class="time-label">hours</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-block">Add Todo</button>
+      </form>
+    </div>
+    
+    <div id="loading-message">Loading todos...</div>
+    
+    <!-- Edit Todo Modal -->
+    <div id="edit-modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Edit Todo</h2>
+        <form id="edit-form">
+          <input type="hidden" id="edit-id">
+          
+          <div class="form-group">
+            <label for="edit-text">Todo:</label>
+            <input type="text" id="edit-text" required>
+          </div>
+          
+          <div class="form-row desktop-row">
+            <div class="form-group due-datetime-group">
+              <label>Due Date & Time:</label>
+              <div class="datetime-inputs">
+                <input type="date" id="edit-due-date">
+                <input type="time" id="edit-due-time" value="17:00" style="display: none;">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>Priority:</label>
+              <div class="priority-buttons" id="edit-priority-buttons">
+                <div class="priority-row">
+                  <button type="button" class="priority-btn immediate" data-priority="0">Immediate</button>
+                  <button type="button" class="priority-btn high" data-priority="1">High</button>
+                </div>
+                <div class="priority-row">
+                  <button type="button" class="priority-btn medium" data-priority="2">Medium</button>
+                  <button type="button" class="priority-btn low" data-priority="3">Low</button>
+                </div>
+                <input type="hidden" id="edit-priority" value="3">
+              </div>
+            </div>
+            
+            <div class="form-group estimated-time-group">
+              <label>Estimated Duration:</label>
+              <div class="time-inputs">
+                <div class="time-input-container">
+                  <input type="number" id="edit-estimated-days" min="0" value="0" required>
+                  <span class="time-label">days</span>
+                </div>
+                <div class="time-input-container">
+                  <input type="number" id="edit-estimated-hours" min="0" max="23" value="0" required>
+                  <span class="time-label">hours</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-block">Save Changes</button>
+        </form>
+      </div>
+    </div>
+    
+    <div id="todos-container">
+      <h2>Tasks (<span id="incomplete-count">0</span>)</h2>
+      <div id="incomplete-todos" class="todos-list"></div>
+      
+      <div class="completed-section-header">
+        <h2 class="completed-header">Completed (<span id="complete-count">0</span>)</h2>
+        <button id="toggle-completed" class="toggle-btn" title="Toggle visibility of completed items">
+          <span class="show-text">Show</span>
+          <span class="hide-text">Hide</span>
+        </button>
+      </div>
+      <div id="completed-todos" class="todos-list collapsed"></div>
+      
+      <div class="data-management-buttons">
+        <button id="export-json" class="action-btn" title="Save all your todos to a JSON file for backup or transfer">Export JSON</button>
+        <button id="import-json" class="action-btn" title="Import todos from a previously exported JSON file">Import JSON</button>
+        <button id="show-json" class="action-btn" title="View the raw JSON data of all your todos">Show JSON</button>
+        <button id="clear-completed" class="action-btn warning" title="Remove all completed todos">Clear Completed</button>
+        <button id="clear-all" class="action-btn danger" title="Delete all todos permanently (cannot be undone)">Clear All</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;">
+      </div>
+    </div>
+    
+    <div class="importance-info">
+      <h3>How Importance is Calculated</h3>
+      <p>Tasks are sorted based on a calculated importance score that considers:</p>
+      <ul>
+        <li><strong>Priority:</strong> Immediate (100 points), High (40 points), Medium (20 points), Low (10 points)</li>
+        <li><strong>Immediate Priority:</strong> Always shown at the top, sorted by creation date</li>
+        <li><strong>Task Age:</strong> Priority increases automatically every 20 days (Low → Medium → High)</li>
+        <li><strong>Age Bonus for High Priority:</strong> +2 points per week of age (up to +20 points maximum)</li>
+        <li><strong>Due Date/Time:</strong>
+          <ul>
+            <li>Overdue: 70 points</li>
+            <li>Due within 8 hours: 50 points</li>
+            <li>Due within 16 hours: 40 points</li>
+            <li>Due within 24 hours: 30 points</li>
+            <li>Due within 48 hours: 20 points</li>
+            <li>Due later: 10 points</li>
+          </ul>
+        </li>
+        <li><strong>Time Buffer Ratio:</strong> Compares due time with estimated completion time
+          <ul>
+            <li>Critical (ratio ≤ 1.0): +70 points (same as overdue)</li>
+            <li>Very tight deadline (ratio ≤ 1.2): +60 points</li>
+            <li>Tight deadline (ratio ≤ 1.5): +50 points</li>
+            <li>Limited buffer (ratio ≤ 2.0): +40 points</li>
+            <li>Moderate buffer (ratio ≤ 3.0): +30 points</li>
+            <li>Comfortable buffer (ratio ≤ 5.0): +20 points</li>
+            <li>Plenty of time (ratio > 5.0): +10 points</li>
+          </ul>
+        </li>
+        <li><strong>Suggested Tasks:</strong> Tasks due today with less than 4 hours estimated duration may be marked as "Suggested" when there are no overdue or immediate tasks</li>
+      </ul>
+      <p>Completed tasks always appear at the bottom of the list.</p>
+    </div>
+  </div>
+  
+  <script>
+    // DOM Elements
+    const todoForm = document.getElementById('todo-form');
+    const todoText = document.getElementById('todo-text');
+    const dueDate = document.getElementById('due-date');
+    const dueTime = document.getElementById('due-time');
+    const priority = document.getElementById('priority');
+    const priorityButtons = document.querySelectorAll('.priority-btn');
+    const estimatedDays = document.getElementById('estimated-days');
+    const estimatedHours = document.getElementById('estimated-hours');
+    const loadingMessage = document.getElementById('loading-message');
+    const incompleteTodos = document.getElementById('incomplete-todos');
+    const completedTodos = document.getElementById('completed-todos');
+    const incompleteCount = document.getElementById('incomplete-count');
+    const completeCount = document.getElementById('complete-count');
+    
+    // Edit Modal Elements
+    const editModal = document.getElementById('edit-modal');
+    const editForm = document.getElementById('edit-form');
+    const editId = document.getElementById('edit-id');
+    const editText = document.getElementById('edit-text');
+    const editDueDate = document.getElementById('edit-due-date');
+    const editDueTime = document.getElementById('edit-due-time');
+    const editPriority = document.getElementById('edit-priority');
+    const editPriorityButtons = document.querySelectorAll('#edit-priority-buttons .priority-btn');
+    const editEstimatedDays = document.getElementById('edit-estimated-days');
+    const editEstimatedHours = document.getElementById('edit-estimated-hours');
+    const closeModal = document.querySelector('.close');
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTodos();
+      setupPriorityButtons();
+      setupDataManagementButtons();
+      setupEditModal();
+      setupDueDateListeners();
+      setupCompletedToggle();
+      // Set up hourly updates for importance scores
+      setupHourlyUpdates();
+    });
+    todoForm.addEventListener('submit', addTodo);
+    
+    // Setup edit modal
+    function setupEditModal() {
+      // Close modal when clicking X
+      closeModal.addEventListener('click', () => {
+        editModal.style.display = 'none';
+      });
+      
+      // Close modal when clicking outside
+      window.addEventListener('click', (event) => {
+        if (event.target === editModal) {
+          editModal.style.display = 'none';
+        }
+      });
+      
+      // Submit form
+      editForm.addEventListener('submit', saveEditedTodo);
+      
+      // Setup priority buttons for edit form
+      const editPriorityButtons = document.querySelectorAll('#edit-priority-buttons .priority-btn');
+      editPriorityButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const selectedPriority = button.getAttribute('data-priority');
+          editPriority.value = selectedPriority;
+          updateEditPriorityButtons(selectedPriority);
+        });
+      });
+    }
+    
+    // Setup completed items toggle
+    function setupCompletedToggle() {
+      const toggleBtn = document.getElementById('toggle-completed');
+      const completedSection = document.getElementById('completed-todos');
+      
+      // Load user preference from localStorage
+      const showCompleted = localStorage.getItem('showCompleted') === 'true';
+      
+      // Apply initial state based on user preference
+      if (showCompleted) {
+        completedSection.classList.remove('collapsed');
+        toggleBtn.classList.add('active');
+      } else {
+        completedSection.classList.add('collapsed');
+        toggleBtn.classList.remove('active');
+      }
+      
+      // Toggle visibility when button is clicked
+      toggleBtn.addEventListener('click', () => {
+        const isCollapsed = completedSection.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+          // Show completed items
+          completedSection.classList.remove('collapsed');
+          toggleBtn.classList.add('active');
+          localStorage.setItem('showCompleted', 'true');
+        } else {
+          // Hide completed items
+          completedSection.classList.add('collapsed');
+          toggleBtn.classList.remove('active');
+          localStorage.setItem('showCompleted', 'false');
+        }
+      });
+    }
+    
+    // Update the selected priority button in the edit modal
+    function updateEditPriorityButtons(selectedPriority) {
+      editPriorityButtons.forEach(button => {
+        if (button.getAttribute('data-priority') === selectedPriority) {
+          button.classList.add('selected');
+        } else {
+          button.classList.remove('selected');
+        }
+      });
+    }
+    
+    // Setup data management buttons
+    function setupDataManagementButtons() {
+      const exportBtn = document.getElementById('export-json');
+      const importBtn = document.getElementById('import-json');
+      const showJsonBtn = document.getElementById('show-json');
+      const clearCompletedBtn = document.getElementById('clear-completed');
+      const clearBtn = document.getElementById('clear-all');
+      const importFile = document.getElementById('import-file');
+      
+      // Export todos to JSON file
+      exportBtn.addEventListener('click', () => {
+        const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        if (todos.length === 0) {
+          alert('No todos to export.');
+          return;
+        }
+        
+        // Create a JSON blob and download it
+        const dataStr = JSON.stringify(todos, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `todos-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+      
+      // Trigger file input when import button is clicked
+      importBtn.addEventListener('click', () => {
+        importFile.click();
+      });
+      
+      // Handle file selection for import
+      importFile.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const importedTodos = JSON.parse(e.target.result);
+            if (!Array.isArray(importedTodos)) {
+              throw new Error('Invalid format: Expected an array of todos');
+            }
+            
+            // Confirm import
+            if (confirm(`Import ${importedTodos.length} todos? This will merge with your existing todos.`)) {
+              // Get existing todos
+              const existingTodos = JSON.parse(localStorage.getItem('todos') || '[]');
+              
+              // Add imported todos with new random IDs to avoid collisions
+              const mergedTodos = [
+                ...existingTodos,
+                ...importedTodos.map(todo => ({
+                  ...todo,
+                  id: generateRandomId() // Generate a new random ID for each imported todo
+                }))
+              ];
+              
+              // Save merged todos
+              localStorage.setItem('todos', JSON.stringify(mergedTodos));
+              
+              // Reload todos
+              loadTodos();
+              
+              alert(`Successfully imported ${importedTodos.length} todos.`);
+            }
+          } catch (error) {
+            console.error('Error importing todos:', error);
+            alert(`Failed to import todos: ${error.message}`);
+          }
+          
+          // Reset file input
+          importFile.value = '';
+        };
+        
+        reader.readAsText(file);
+      });
+      
+      // Show JSON in new tab
+      showJsonBtn.addEventListener('click', () => {
+        const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        if (todos.length === 0) {
+          alert('No todos to show.');
+          return;
+        }
+        
+        // Format JSON with indentation for readability
+        const formattedJson = JSON.stringify(todos, null, 2);
+        
+        // Open a new tab with the JSON data
+        const newTab = window.open();
+        newTab.document.write(`
+          <html>
+            <head>
+              <title>Todo List JSON Data</title>
+              <style>
+                body { font-family: monospace; background-color: #f8f9fa; padding: 20px; }
+                pre { background-color: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+              </style>
+            </head>
+            <body>
+              <h2>Todo List JSON Data</h2>
+              <pre>${formattedJson}</pre>
+            </body>
+          </html>
+        `);
+        newTab.document.close();
+      });
+      
+      // Clear completed todos
+      clearCompletedBtn.addEventListener('click', () => {
+        const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        const completedTodos = todos.filter(todo => parseInt(todo.completed));
+        
+        if (completedTodos.length === 0) {
+          alert('No completed todos to clear.');
+          return;
+        }
+        
+        if (confirm(`Are you sure you want to delete all ${completedTodos.length} completed todos? This action cannot be undone!`)) {
+          // Keep only incomplete todos
+          const incompleteTodos = todos.filter(todo => !parseInt(todo.completed));
+          localStorage.setItem('todos', JSON.stringify(incompleteTodos));
+          loadTodos();
+          alert(`${completedTodos.length} completed todos have been deleted.`);
+        }
+      });
+      
+      // Clear all todos
+      clearBtn.addEventListener('click', () => {
+        const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        if (todos.length === 0) {
+          alert('No todos to clear.');
+          return;
+        }
+        
+        if (confirm(`Are you sure you want to delete all ${todos.length} todos? This action cannot be undone!`)) {
+          localStorage.removeItem('todos');
+          loadTodos();
+          alert('All todos have been deleted.');
+        }
+      });
+    }
+    
+    // Set up hourly updates for importance scores
+    function setupHourlyUpdates() {
+      // Update immediately on load
+      updateImportanceScores();
+      
+      // Calculate time until the next hour
+      const now = new Date();
+      const minutesUntilNextHour = 60 - now.getMinutes();
+      const secondsUntilNextHour = 60 - now.getSeconds();
+      const millisecondsUntilNextHour = (minutesUntilNextHour * 60 + secondsUntilNextHour) * 1000;
+      
+      // Set timeout to update at the next hour
+      setTimeout(() => {
+        updateImportanceScores();
+        // Then set interval for every hour
+        setInterval(updateImportanceScores, 60 * 60 * 1000);
+      }, millisecondsUntilNextHour);
+      
+      console.log(`Importance scores will update in ${Math.round(millisecondsUntilNextHour/1000/60)} minutes and then every hour`);
+    }
+    
+    // Update importance scores for all todos
+    function updateImportanceScores() {
+      console.log('Updating importance scores at', new Date().toLocaleTimeString());
+      const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+      if (todos.length > 0) {
+        renderTodos(todos); // This will recalculate importance scores
+      }
+    }
+    
+    // Setup priority buttons
+    function setupPriorityButtons() {
+      // Set initial selected button (Low by default)
+      updateSelectedPriorityButton('3');
+      
+      // Add click event listeners to all priority buttons
+      priorityButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const selectedPriority = button.getAttribute('data-priority');
+          priority.value = selectedPriority;
+          updateSelectedPriorityButton(selectedPriority);
+        });
+      });
+    }
+    
+    // Update the selected priority button
+    function updateSelectedPriorityButton(selectedPriority) {
+      priorityButtons.forEach(button => {
+        if (button.getAttribute('data-priority') === selectedPriority) {
+          button.classList.add('selected');
+        } else {
+          button.classList.remove('selected');
+        }
+      });
+    }
+
+    // Load todos from localStorage
+    function loadTodos() {
+      showLoading(true);
+      
+      try {
+        // Get todos from localStorage or initialize empty array
+        const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        renderTodos(todos);
+      } catch (error) {
+        console.error('Error loading todos:', error);
+        alert('Failed to load todos. Please try again.');
+      }
+      
+      showLoading(false);
+    }
+    
+    // Add event listener for page visibility changes to recalculate on tab focus
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        console.log('Page became visible, updating importance scores');
+        updateImportanceScores();
+      }
+    });
+    
+    // Add event listener for page reload/refresh
+    window.addEventListener('pageshow', function(event) {
+      // The pageshow event is fired when the page is shown, including when coming from cache
+      if (event.persisted) {
+        // Page was restored from the bfcache (back-forward cache)
+        console.log('Page restored from cache, updating importance scores');
+        updateImportanceScores();
+      }
+    });
+
+    // Save todos to localStorage
+    function saveTodos(todos) {
+      localStorage.setItem('todos', JSON.stringify(todos));
+    }
+
+    // Generate a random 32-character hexadecimal ID
+    function generateRandomId() {
+      const hexChars = '0123456789abcdef';
+      let id = '';
+      for (let i = 0; i < 32; i++) {
+        id += hexChars.charAt(Math.floor(Math.random() * hexChars.length));
+      }
+      return id;
+    }
+
+    // Add a new todo
+    function addTodo(e) {
+      e.preventDefault();
+      
+      if (!todoText.value.trim()) {
+        alert('Please enter a todo item');
+        return;
+      }
+      
+      // Parse days and hours values, defaulting to 0 if invalid
+      const days = parseInt(estimatedDays.value) || 0;
+      const hours = parseInt(estimatedHours.value) || 0;
+      
+      // Allow zero time estimates (no validation required)
+      
+      showLoading(true);
+      
+      try {
+        // Get existing todos
+        const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        
+        // Generate a random 32-character hexadecimal ID
+        const newId = generateRandomId();
+        
+        // Calculate estimated time in hours for consistent comparison (8 hours per day)
+        const estTimeInHours = (days * 8) + hours;
+        
+        // Combine date and time for the due datetime
+        let dueDateTimeStr = '';
+        if (dueDate.value) {
+          dueDateTimeStr = dueDate.value + 'T' + (dueTime.value || '17:00');
+        }
+        
+        // Create new todo
+        const newTodo = {
+          id: newId,
+          text: todoText.value.trim(),
+          due_date: dueDate.value || '',
+          due_time: dueTime.value || '17:00',
+          due_datetime: dueDateTimeStr,
+          priority: parseInt(priority.value),
+          estimated_days: days,
+          estimated_hours: hours,
+          total_hours: estTimeInHours,
+          completed: 0,
+          created_at: new Date().toISOString(),
+          isNew: true // Flag for animation
+        };
+        
+        // Add to array and save
+        todos.push(newTodo);
+        saveTodos(todos);
+        
+        // Clear form
+        todoText.value = '';
+        dueDate.value = '';
+        dueTime.value = '17:00';
+        dueTime.style.display = 'none'; // Hide the time input when resetting
+        priority.value = '3';
+        updateSelectedPriorityButton('3'); // Reset priority button selection
+        estimatedDays.value = '0';
+        estimatedHours.value = '0';
+        
+        // Render updated todos
+        renderTodos(todos);
+      } catch (error) {
+        console.error('Error adding todo:', error);
+        alert('Failed to add todo. Please try again.');
+      }
+      
+      showLoading(false);
+    }
+
+    // Open edit modal for a todo
+    function editTodo(todo) {
+      // Set form values
+      editId.value = todo.id;
+      editText.value = todo.text;
+      editDueDate.value = todo.due_date || '';
+      editDueTime.value = todo.due_time || '17:00';
+      editPriority.value = todo.priority;
+      editEstimatedDays.value = todo.estimated_days || 0;
+      editEstimatedHours.value = todo.estimated_hours || 0;
+      
+      // Update selected priority button
+      updateEditPriorityButtons(todo.priority.toString());
+      
+      // Show/hide due time input based on whether due date is set
+      if (todo.due_date) {
+        editDueTime.style.display = 'block';
+      } else {
+        editDueTime.style.display = 'none';
+      }
+      
+      // Show modal
+      editModal.style.display = 'block';
+    }
+    
+    // Save edited todo
+    function saveEditedTodo(event) {
+      event.preventDefault();
+      
+      // Validate form
+      if (!editText.value.trim()) {
+        alert('Please enter a todo description');
+        return;
+      }
+      
+      // Parse days and hours values
+      const days = parseInt(editEstimatedDays.value) || 0;
+      const hours = parseInt(editEstimatedHours.value) || 0;
+      
+      showLoading(true);
+      
+      try {
+        // Get todos from localStorage
+        const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        
+        // Find the todo to update
+        const todoIndex = todos.findIndex(todo => todo.id === editId.value);
+        
+        if (todoIndex === -1) {
+          throw new Error('Todo not found');
+        }
+        
+        // Calculate estimated time in hours
+        const estTimeInHours = (days * 8) + hours;
+        
+        // Combine date and time for the due datetime
+        let dueDateTimeStr = '';
+        if (editDueDate.value) {
+          dueDateTimeStr = editDueDate.value + 'T' + (editDueTime.value || '17:00');
+        }
+        
+        // Update todo
+        todos[todoIndex] = {
+          ...todos[todoIndex],
+          text: editText.value.trim(),
+          due_date: editDueDate.value || '',
+          due_time: editDueTime.value || '17:00',
+          due_datetime: dueDateTimeStr,
+          priority: parseInt(editPriority.value),
+          estimated_days: days,
+          estimated_hours: hours,
+          total_hours: estTimeInHours,
+          last_edited_at: new Date().toISOString(),
+          isEdited: true // Flag for animation
+        };
+        
+        // Save updated todos
+        localStorage.setItem('todos', JSON.stringify(todos));
+        
+        // Close modal
+        editModal.style.display = 'none';
+        
+        // Reload todos
+        loadTodos();
+      } catch (error) {
+        console.error('Error saving edited todo:', error);
+        alert('Failed to save changes. Please try again.');
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    // Toggle todo completion status
+    function toggleComplete(id) {
+      // Find the todo element in the DOM
+      const todoElement = document.querySelector(`[data-todo-id="${id}"]`);
+      
+      if (todoElement) {
+        // Apply animation class first
+        const isCurrentlyComplete = todoElement.classList.contains('completed');
+        
+        if (!isCurrentlyComplete) {
+          // Marking as complete - add animation class
+          todoElement.classList.add('todo-completing');
+        } else {
+          // Marking as incomplete - add animation class
+          todoElement.classList.add('todo-uncompleting');
+        }
+        
+        // Wait for animation to start before updating the state
+        setTimeout(() => {
+          updateTodoCompletionState(id, !isCurrentlyComplete);
+        }, 300);
+      } else {
+        // Element not found in DOM, update state directly
+        updateTodoCompletionState(id);
+      }
+    }
+    
+    // Update the todo completion state in localStorage
+    function updateTodoCompletionState(id, isCompleting = true) {
+      showLoading(true);
+      
+      try {
+        // Get existing todos
+        const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        
+        // Find the todo to toggle
+        const todoIndex = todos.findIndex(todo => todo.id === id);
+        if (todoIndex === -1) {
+          throw new Error('Todo not found');
+        }
+        
+        // Ensure the todo has all required properties
+        if (todos[todoIndex].priority === undefined) todos[todoIndex].priority = 3;
+        if (!todos[todoIndex].total_hours) todos[todoIndex].total_hours = 1;
+        if (!todos[todoIndex].created_at) todos[todoIndex].created_at = new Date().toISOString();
+        
+        // Store the original priority to preserve it when toggling completion
+        if (!todos[todoIndex].original_priority && !isCompleting) {
+          // If we're marking as incomplete and don't have original priority stored,
+          // use the current priority (this handles legacy data)
+          todos[todoIndex].original_priority = todos[todoIndex].priority;
+        } else if (!todos[todoIndex].original_priority) {
+          // If completing for the first time, store the original priority
+          todos[todoIndex].original_priority = todos[todoIndex].priority;
+        }
+        
+        // Check if we're marking as complete or incomplete
+        const isMarkedComplete = isCompleting;
+        
+        if (isMarkedComplete) {
+          // Calculate importance score directly
+          try {
+            // First, ensure we have all the data needed for calculation
+            const todoForCalc = { ...todos[todoIndex] };
+            
+            // Make sure due hours is calculated
+            if (todoForCalc.due_date) {
+              const now = new Date();
+              
+              // Create due date with time
+              let dueDateTime;
+              if (todoForCalc.due_datetime) {
+                dueDateTime = new Date(todoForCalc.due_datetime);
+              } else if (todoForCalc.due_time) {
+                // Handle legacy data that might not have due_datetime
+                const [hours, minutes] = todoForCalc.due_time.split(':').map(Number);
+                dueDateTime = new Date(todoForCalc.due_date);
+                dueDateTime.setHours(hours, minutes, 0, 0);
+              } else {
+                // Default to 5:00 PM if no time specified
+                dueDateTime = new Date(todoForCalc.due_date);
+                dueDateTime.setHours(17, 0, 0, 0);
+              }
+              
+              // Calculate total hours difference
+              const diffMs = dueDateTime - now;
+              const diffHours = diffMs / (1000 * 60 * 60);
+              todoForCalc.due_hours = diffHours < 0 ? -1 : 
+                                   diffHours < 8 ? Math.max(0, Math.ceil(diffHours)) : 
+                                   (Math.floor(diffHours / 24) + 1) * 8;
+            }
+            
+            // Now calculate the importance score - recalculate directly to ensure it's accurate
+            // Use the full importance calculation logic
+            const score = calculateImportance(todoForCalc);
+            todos[todoIndex].importance_at_completion = score;
+            console.log('Importance at completion calculated:', score);
+            
+            // Store completion time and set animation flag
+            const now = new Date();
+            todos[todoIndex].completed_at = now.toISOString();
+            todos[todoIndex].justCompleted = true; // Flag for animation in completed section
+            console.log('Completion time set:', now.toISOString());
+          } catch (calcError) {
+            console.error('Error calculating importance:', calcError);
+            
+            // If calculation fails, attempt a basic calculation
+            try {
+              // Base priority score
+              const priorityValue = parseInt(todos[todoIndex].priority) || 3;
+              const priorityScores = {
+                0: 100, // Immediate
+                1: 40,  // High
+                2: 20,  // Medium
+                3: 10   // Low
+              };
+              
+              let score = priorityScores[priorityValue] || 10;
+              
+              // Add urgency score if due date is available
+              if (todos[todoIndex].due_date) {
+                const now = new Date();
+                const dueDate = new Date(todos[todoIndex].due_datetime || todos[todoIndex].due_date);
+                
+                if (dueDate < now) {
+                  // Overdue
+                  score += 70;
+                } else {
+                  const diffHours = (dueDate - now) / (1000 * 60 * 60);
+                  
+                  if (diffHours <= 8) score += 50;
+                  else if (diffHours <= 16) score += 40;
+                  else if (diffHours <= 24) score += 30;
+                  else if (diffHours <= 48) score += 20;
+                  else score += 10;
+                }
+                
+                // Add time buffer consideration
+                const estHours = parseFloat(todos[todoIndex].total_hours) || 1;
+                const dueHours = Math.max(0, (dueDate - now) / (1000 * 60 * 60));
+                const timeBufferRatio = estHours > 0 ? dueHours / estHours : dueHours;
+                
+                if (timeBufferRatio <= 1.0) score += 70;
+                else if (timeBufferRatio <= 1.2) score += 60;
+                else if (timeBufferRatio <= 1.5) score += 50;
+                else if (timeBufferRatio <= 2.0) score += 40;
+                else if (timeBufferRatio <= 3.0) score += 30;
+                else if (timeBufferRatio <= 5.0) score += 20;
+                else score += 10;
+              }
+              
+              todos[todoIndex].importance_at_completion = score;
+            } catch (innerError) {
+              // If all else fails, use the priority-based fallback
+              console.error('Fallback calculation also failed:', innerError);
+              const priorityValue = parseInt(todos[todoIndex].priority) || 3;
+              const scoreMap = {
+                0: 100, // Immediate
+                1: 40,  // High
+                2: 20,  // Medium
+                3: 10   // Low
+              };
+              todos[todoIndex].importance_at_completion = scoreMap[priorityValue] || 10;
+            }
+            
+            todos[todoIndex].completed_at = new Date().toISOString();
+          }
+        } else {
+          // If marking as incomplete, remove these properties
+          delete todos[todoIndex].importance_at_completion;
+          delete todos[todoIndex].completed_at;
+          todos[todoIndex].justUncompleted = true; // Flag for animation when uncompleting
+          
+          // Restore original priority when marking as incomplete
+          if (todos[todoIndex].original_priority !== undefined) {
+            todos[todoIndex].priority = todos[todoIndex].original_priority;
+          }
+        }
+        
+        // Toggle completion status
+        todos[todoIndex].completed = isMarkedComplete ? 1 : 0;
+        
+        // Save and render
+        localStorage.setItem('todos', JSON.stringify(todos));
+        renderTodos(todos);
+      } catch (error) {
+        console.error('Error updating todo:', error);
+        alert('Failed to update todo. Please try again.');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // Delete a todo
+    function deleteTodo(id) {
+      if (!confirm('Are you sure you want to delete this todo?')) {
+        return;
+      }
+      
+      showLoading(true);
+      
+      try {
+        // Get existing todos
+        const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        
+        // Filter out the todo with the given ID
+        const updatedTodos = todos.filter(todo => todo.id !== id);
+        saveTodos(updatedTodos);
+        renderTodos(updatedTodos);
+      } catch (error) {
+        console.error('Error deleting todo:', error);
+        alert('Failed to delete todo. Please try again.');
+      }
+      
+      showLoading(false);
+    }
+
+    // Render todos in the DOM
+    function renderTodos(todos) {
+      // Clear existing todos
+      incompleteTodos.innerHTML = '';
+      completedTodos.innerHTML = '';
+      
+      // Helper function to check if a date is today or overdue
+      function isUrgent(dateString) {
+        if (!dateString) return false;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const date = new Date(dateString);
+        date.setHours(0, 0, 0, 0);
+        
+        return date <= today; // Today or overdue
+      }
+      
+      // Helper function to check if a task qualifies for suggested status
+      function qualifiesForSuggested(todo) {
+        if (parseInt(todo.completed)) return false;
+        if (!todo.due_date) return false;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const dueDate = new Date(todo.due_date);
+        dueDate.setHours(0, 0, 0, 0);
+        
+        // Check if due today and estimated time is between 1-4 hours
+        return dueDate.getTime() === today.getTime() && 
+               todo.total_hours > 0 && todo.total_hours < 4;
+      }
+      
+      // Helper function to calculate importance score
+      function calculateImportance(todo) {
+        let score = 0;
+        
+        // Calculate effective priority based on task age
+        let effectivePriority = parseInt(todo.priority || 3); // Default to low priority if not set
+        
+        // Adjust priority based on age (created_at date)
+        let ageInDays = 0;
+        if (todo.created_at) {
+          const now = new Date();
+          const createdDate = new Date(todo.created_at);
+          ageInDays = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+          
+          // Every 20 days, increase priority by one level (decrease priority number)
+          const priorityIncrease = Math.floor(ageInDays / 20);
+          effectivePriority = Math.max(1, effectivePriority - priorityIncrease); // Cap at priority 1 (highest)
+          
+          // Store the effective priority for display
+          todo.effective_priority = effectivePriority;
+          
+          // Store the age in days for display
+          todo.age_in_days = ageInDays;
+        }
+        
+        // Base score from effective priority (1-3, lower is more important)
+        // Use exponential weighting: High = 40, Medium = 20, Low = 10
+        // This makes high priority worth 2x medium, and medium worth 2x low
+        let priorityPoints = 0;
+        switch(effectivePriority) {
+          case 0: // Immediate
+            priorityPoints = 100;
+            break;
+          case 1: // High
+            priorityPoints = 40;
+            // Add extra points for older high-priority tasks
+            // For every week old, add 2 points (up to 20 extra points for 10+ weeks)
+            if (ageInDays > 0) {
+              const ageInWeeks = Math.floor(ageInDays / 7);
+              const ageBonus = Math.min(ageInWeeks * 2, 20);
+              priorityPoints += ageBonus;
+              
+              // Store the age bonus for display
+              todo.age_bonus = ageBonus;
+            }
+            break;
+          case 2: // Medium
+            priorityPoints = 20;
+            break;
+          case 3: // Low
+            priorityPoints = 10;
+            break;
+        }
+        score += priorityPoints;
+        
+        // Calculate due hours based on current time and due date/time
+        let dueHours = 0;
+        
+        if (todo.due_date) {
+          const now = new Date();
+          
+          // Create due date with time
+          let dueDateTime;
+          if (todo.due_datetime) {
+            dueDateTime = new Date(todo.due_datetime);
+          } else if (todo.due_time) {
+            // Handle legacy data that might not have due_datetime
+            const [hours, minutes] = todo.due_time.split(':').map(Number);
+            dueDateTime = new Date(todo.due_date);
+            dueDateTime.setHours(hours, minutes, 0, 0);
+          } else {
+            // Default to 5:00 PM if no time specified
+            dueDateTime = new Date(todo.due_date);
+            dueDateTime.setHours(17, 0, 0, 0);
+          }
+          
+          // Calculate total hours difference
+          const diffMs = dueDateTime - now;
+          const diffHours = diffMs / (1000 * 60 * 60);
+          
+          if (diffHours < 0) {
+            // Task is overdue
+            dueHours = -1; // Special flag for overdue
+          } else if (diffHours < 8) {
+            // Less than 8 hours remaining, use actual hours
+            dueHours = Math.max(0, Math.ceil(diffHours));
+          } else {
+            // More than 8 hours, use (days + 1) * 8
+            const diffDays = Math.floor(diffHours / 24);
+            dueHours = (diffDays + 1) * 8;
+          }
+          
+          // Add urgency score based on due hours
+          if (dueHours === -1) { // Overdue
+            // Base score for overdue tasks
+            score += 70; // Highest urgency
+            
+            // Calculate additional points for each week overdue
+            if (todo.due_datetime || todo.due_date) {
+              const now = new Date();
+              const dueDate = new Date(todo.due_datetime || todo.due_date);
+              const overdueDays = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
+              const overdueWeeks = Math.floor(overdueDays / 7);
+              
+              // Add 2 points for each week overdue
+              const overdueBonus = overdueWeeks * 2;
+              score += overdueBonus;
+              
+              // Store the overdue bonus for display
+              todo.overdue_bonus = overdueBonus;
+              todo.overdue_weeks = overdueWeeks;
+            }
+          } else if (dueHours <= 8) { // Due within 8 hours (today)
+            score += 50;
+          } else if (dueHours <= 16) { // Due within 16 hours (today or tomorrow)
+            score += 40;
+          } else if (dueHours <= 24) { // Due within 24 hours
+            score += 30;
+          } else if (dueHours <= 48) { // Due within 48 hours
+            score += 20;
+          } else { // Due later
+            score += 10;
+          }
+        }
+        
+        // Factor in estimated time vs due hours
+        const estHours = parseFloat(todo.total_hours) || 1;
+        
+        if (dueHours === -1) { // Overdue tasks
+          // For overdue tasks, longer tasks are more important to start
+          score += Math.min(estHours, 24) * 0.5; // Up to 12 points for a full day task
+          
+          // Note: Additional points for weeks overdue are already added above
+        } else if (dueHours > 0) { // Tasks with a due date
+          // Calculate time buffer ratio instead of absolute difference
+          // This better represents how tight the deadline is relative to the work needed
+          const timeBufferRatio = estHours > 0 ? dueHours / estHours : dueHours;
+          
+          // Store the buffer ratio for debugging
+          todo.timeBufferRatio = timeBufferRatio;
+          
+          if (timeBufferRatio <= 1.0) {
+            // Critical - not enough time to complete (same or less time than needed)
+            score += 70; // Same as overdue to prioritize tasks that can't be completed in time
+          } else if (timeBufferRatio <= 1.2) {
+            // Very tight deadline - barely enough time
+            score += 60;
+          } else if (timeBufferRatio <= 1.5) {
+            // Tight deadline - little buffer
+            score += 50;
+          } else if (timeBufferRatio <= 2.0) {
+            // Limited buffer - less than double the time needed
+            score += 40;
+          } else if (timeBufferRatio <= 3.0) {
+            // Moderate buffer - up to triple the time needed
+            score += 30;
+          } else if (timeBufferRatio <= 5.0) {
+            // Comfortable buffer
+            score += 20;
+          } else {
+            // Plenty of time
+            score += 10;
+          }
+        } else {
+          // For tasks without a due date, shorter tasks are easier to complete
+          score += Math.max(0, 12 - Math.min(estHours, 24) * 0.5); // Up to 12 points for a 1-hour task
+        }
+        
+        // Store the calculated due hours for display
+        todo.due_hours = dueHours;
+        
+        return score;
+      }
+      
+      // Calculate importance score for each todo
+      todos.forEach(todo => {
+        todo.importanceScore = calculateImportance(todo);
+      });
+      
+      // Sort todos by completion status and importance score
+      const sortedTodos = [...todos].sort((a, b) => {
+        // First sort by completion status
+        if (a.completed !== b.completed) {
+          return a.completed - b.completed;
+        }
+        
+        // For completed todos, sort by completion time (newest first)
+        if (parseInt(a.completed) && parseInt(b.completed)) {
+          if (a.completed_at && b.completed_at) {
+            return new Date(b.completed_at) - new Date(a.completed_at);
+          }
+          return 0;
+        }
+        
+        // For incomplete todos, sort immediate priority first by created date
+        if (parseInt(a.priority) === 0 && parseInt(b.priority) === 0) {
+          return new Date(a.created_at) - new Date(b.created_at);
+        }
+        
+        // If only one is immediate, it goes first
+        if (parseInt(a.priority) === 0) return -1;
+        if (parseInt(b.priority) === 0) return 1;
+        
+        // For other incomplete todos, sort by importance score (higher is more important)
+        return b.importanceScore - a.importanceScore;
+      });
+      
+      // Filter todos by completion status
+      const incomplete = sortedTodos.filter(todo => !parseInt(todo.completed));
+      const completed = sortedTodos.filter(todo => parseInt(todo.completed));
+      
+      // Find tasks that qualify for suggested status
+      const suggestedCandidates = incomplete.filter(qualifiesForSuggested);
+      
+      // Reset suggested flag for all todos
+      todos.forEach(todo => {
+        todo.isSuggested = false;
+      });
+      
+      // Check if there are any overdue tasks or immediate priority tasks
+      const hasOverdueTasks = incomplete.some(todo => {
+        if (!todo.due_date) return false;
+        
+        const now = new Date();
+        const dueDate = new Date(todo.due_datetime || todo.due_date);
+        return dueDate < now;
+      });
+      
+      const hasImmediateTasks = incomplete.some(todo => parseInt(todo.priority) === 0);
+      
+      // Only show suggested if there are no overdue or immediate tasks
+      if (suggestedCandidates.length > 0 && !hasOverdueTasks && !hasImmediateTasks) {
+        // Sort by estimated duration (ascending) and then by importance (descending)
+        const sortedCandidates = [...suggestedCandidates].sort((a, b) => {
+          if (a.total_hours !== b.total_hours) {
+            return a.total_hours - b.total_hours; // Shorter duration first
+          }
+          return b.importanceScore - a.importanceScore; // Higher importance if same duration
+        });
+        
+        // Mark the first one as suggested
+        sortedCandidates[0].isSuggested = true;
+      }
+      
+      // Update counters
+      incompleteCount.textContent = incomplete.length;
+      completeCount.textContent = completed.length;
+      
+      // Hide completed section if no completed todos
+      document.querySelector('.completed-section-header').style.display = completed.length > 0 ? 'flex' : 'none';
+      
+      // Render incomplete todos
+      if (incomplete.length === 0) {
+        incompleteTodos.innerHTML = '<p>No tasks to show</p>';
+      } else {
+        incomplete.forEach(todo => {
+          // Check if this is a new or edited todo
+          const animationType = todo.isNew ? 'todo-new' : (todo.isEdited ? 'todo-edited' : '');
+          incompleteTodos.appendChild(createTodoElement(todo, animationType));
+          
+          // Reset the flags after animation
+          if (todo.isNew) todo.isNew = false;
+          if (todo.isEdited) todo.isEdited = false;
+        });
+      }
+      
+      // Render completed todos
+      if (completed.length > 0) {
+        completed.forEach(todo => {
+          // Check animation type for completed todos
+          let animationType = '';
+          if (todo.justCompleted) {
+            animationType = 'todo-completed-new';
+          } else if (todo.isEdited) {
+            animationType = 'todo-edited';
+          } else if (todo.justUncompleted) {
+            animationType = 'todo-uncompleting';
+          }
+          
+          completedTodos.appendChild(createTodoElement(todo, animationType));
+          
+          // Reset the flags after animation
+          if (todo.justCompleted) todo.justCompleted = false;
+          if (todo.isEdited) todo.isEdited = false;
+          if (todo.justUncompleted) todo.justUncompleted = false;
+        });
+      }
+    }
+
+    // Create a todo element
+    function createTodoElement(todo, animationType = '') {
+      const todoElement = document.createElement('div');
+      
+      // The suggested flag will be set by renderTodos function
+      const isSuggested = todo.isSuggested || false;
+      
+      // Check if this is an immediate priority task
+      const isImmediate = parseInt(todo.priority) === 0 && !parseInt(todo.completed);
+      
+      // Check if this is an overdue task
+      let isOverdue = false;
+      if (!parseInt(todo.completed) && todo.due_date) {
+        const now = new Date();
+        const dueDate = new Date(todo.due_datetime || todo.due_date);
+        isOverdue = dueDate < now;
+      }
+      
+      todoElement.className = `todo ${parseInt(todo.completed) ? 'completed' : ''} ${getPriorityClass(todo.priority)} ${isSuggested ? 'suggested' : ''} ${isImmediate ? 'immediate-task' : ''} ${isOverdue ? 'overdue-task' : ''} ${animationType}`;
+      todoElement.setAttribute('data-todo-id', todo.id); // Add data attribute for ID
+      
+      const checkboxContainer = document.createElement('div');
+      checkboxContainer.className = 'checkbox-container';
+      
+      const tickMark = document.createElement('span');
+      tickMark.className = 'tick-mark';
+      tickMark.addEventListener('click', () => toggleComplete(todo.id));
+      
+      checkboxContainer.appendChild(tickMark);
+      
+      const todoInfo = document.createElement('div');
+      todoInfo.className = 'todo-info';
+      
+      const todoTitle = document.createElement('h3');
+      todoTitle.textContent = todo.text;
+      
+      const todoMeta = document.createElement('div');
+      todoMeta.className = 'todo-meta';
+      
+      const priorityDiv = document.createElement('div');
+      priorityDiv.classList.add('priority');
+      
+      // Display effective priority if it's different from original priority
+      if (todo.effective_priority !== undefined && todo.effective_priority !== parseInt(todo.priority)) {
+        priorityDiv.textContent = `Priority: ${getPriorityLabel(todo.priority)} → ${getPriorityLabel(todo.effective_priority)} (aged)`;
+        priorityDiv.classList.add('priority-increased');
+      } else {
+        priorityDiv.textContent = `Priority: ${getPriorityLabel(todo.priority)}`;
+      }
+      
+      const dueDateDiv = document.createElement('div');
+      dueDateDiv.className = 'due-date';
+      dueDateDiv.textContent = `Due: ${formatDateTime(todo.due_date, todo.due_time)}`;
+      
+      const dueHoursDiv = document.createElement('div');
+      dueHoursDiv.className = 'due-hours';
+      
+      // Only show due hours if there's a due date
+      if (todo.due_date) {
+        if (todo.due_hours !== undefined) {
+          dueHoursDiv.textContent = formatDueHours(todo.due_hours);
+          
+          // Add urgency class
+          if (todo.due_hours === -1) {
+            dueHoursDiv.classList.add('overdue');
+          } else if (todo.due_hours <= 8) {
+            dueHoursDiv.classList.add('urgent');
+          }
+          
+          // Add time buffer ratio indicator for non-completed tasks
+          if (!parseInt(todo.completed) && todo.timeBufferRatio !== undefined && todo.timeBufferRatio <= 1.5) {
+            const bufferIndicator = document.createElement('span');
+            bufferIndicator.className = 'buffer-indicator';
+            if (todo.timeBufferRatio <= 1.0) {
+              bufferIndicator.textContent = ' (Critical)'; 
+              bufferIndicator.style.color = '#dc3545'; // Red
+            } else if (todo.timeBufferRatio <= 1.2) {
+              bufferIndicator.textContent = ' (Very tight)';
+              bufferIndicator.style.color = '#fd7e14'; // Orange
+            } else {
+              bufferIndicator.textContent = ' (Tight)';
+              bufferIndicator.style.color = '#ffc107'; // Yellow
+            }
+            dueHoursDiv.appendChild(bufferIndicator);
+          }
+        }
+      } else {
+        dueHoursDiv.textContent = 'No deadline';
+        dueHoursDiv.classList.add('no-deadline');
+      }
+      
+      const timeDiv = document.createElement('div');
+      timeDiv.className = 'estimated-time';
+      let timeText = 'Est. Time: ';
+      if (todo.estimated_days > 0) {
+        timeText += `${todo.estimated_days} day${todo.estimated_days > 1 ? 's' : ''}`;
+        if (todo.estimated_hours > 0) {
+          timeText += ` ${todo.estimated_hours} hour${todo.estimated_hours > 1 ? 's' : ''}`;
+        }
+      } else if (todo.estimated_hours > 0) {
+        timeText += `${todo.estimated_hours} hour${todo.estimated_hours > 1 ? 's' : ''}`;
+      } else {
+        timeText += '0 hours'; // Both days and hours are zero
+      }
+      timeDiv.textContent = timeText;
+      
+      const scoreDiv = document.createElement('div');
+      scoreDiv.className = 'importance-score';
+      scoreDiv.textContent = `Importance: ${Math.round(todo.importanceScore)}`;
+      
+      // Create a div for creation date/time
+      const createdAtDiv = document.createElement('div');
+      createdAtDiv.className = 'created-at';
+      if (todo.created_at) {
+        const createdDate = new Date(todo.created_at);
+        createdAtDiv.textContent = `Created: ${createdDate.toLocaleDateString()} ${createdDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      }
+      
+      // Create a div for completion date/time and importance at completion
+      const completedAtDiv = document.createElement('div');
+      completedAtDiv.className = 'completed-at';
+      if (parseInt(todo.completed) && todo.completed_at) {
+        const completedDate = new Date(todo.completed_at);
+        completedAtDiv.textContent = `Completed: ${completedDate.toLocaleDateString()} ${completedDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+        completedAtDiv.style.color = '#28a745'; // Green color for completion
+      } else if (parseInt(todo.completed)) {
+        // Fallback if completed_at is missing
+        completedAtDiv.textContent = 'Completed';
+        completedAtDiv.style.color = '#28a745'; // Green color for completion
+      }
+      
+      // Create a div for importance at completion
+      const importanceAtCompletionDiv = document.createElement('div');
+      importanceAtCompletionDiv.className = 'importance-at-completion';
+      if (parseInt(todo.completed) && todo.importance_at_completion !== undefined) {
+        const importanceValue = Math.round(todo.importance_at_completion);
+        importanceAtCompletionDiv.textContent = `Importance at completion: ${importanceValue}`;
+        importanceAtCompletionDiv.style.fontWeight = 'bold';
+        
+        // Add visual indicator based on importance value
+        if (importanceValue >= 100) {
+          importanceAtCompletionDiv.style.color = '#9c27b0'; // Immediate importance - purple
+        } else if (importanceValue > 50) {
+          importanceAtCompletionDiv.style.color = '#dc3545'; // High importance - red
+        } else if (importanceValue > 30) {
+          importanceAtCompletionDiv.style.color = '#fd7e14'; // Medium importance - orange
+        } else {
+          importanceAtCompletionDiv.style.color = '#28a745'; // Low importance - green
+        }
+      } else if (parseInt(todo.completed)) {
+        // Fallback if importance_at_completion is missing
+        const priorityValue = parseInt(todo.original_priority !== undefined ? todo.original_priority : todo.priority) || 3;
+        const scoreMap = {
+          0: 100, // Immediate
+          1: 40,  // High
+          2: 20,  // Medium
+          3: 10   // Low
+        };
+        const fallbackImportance = scoreMap[priorityValue] || 10;
+        importanceAtCompletionDiv.textContent = `Importance at completion: ${fallbackImportance}`;
+        importanceAtCompletionDiv.style.fontStyle = 'italic';
+        
+        // Add visual indicator based on original priority
+        if (priorityValue === 0) {
+          importanceAtCompletionDiv.style.color = '#9c27b0'; // Immediate importance - purple
+        } else if (priorityValue === 1) {
+          importanceAtCompletionDiv.style.color = '#dc3545'; // High importance - red
+        } else if (priorityValue === 2) {
+          importanceAtCompletionDiv.style.color = '#fd7e14'; // Medium importance - orange
+        } else {
+          importanceAtCompletionDiv.style.color = '#28a745'; // Low importance - green
+        }
+      }
+      
+      // Add all metadata to the todo
+      todoMeta.appendChild(priorityDiv);
+      todoMeta.appendChild(dueDateDiv);
+      
+      // Add due hours and time info only for incomplete todos
+      if (!parseInt(todo.completed)) {
+        todoMeta.appendChild(dueHoursDiv);
+      }
+      
+      todoMeta.appendChild(timeDiv);
+      todoMeta.appendChild(createdAtDiv);
+      
+      // Add completed info only for completed todos
+      if (parseInt(todo.completed)) {
+        todoMeta.appendChild(completedAtDiv);
+        todoMeta.appendChild(importanceAtCompletionDiv);
+      }
+      
+      // Always show current importance score for incomplete todos
+      if (!parseInt(todo.completed)) {
+        todoMeta.appendChild(scoreDiv);
+      }
+      
+      todoInfo.appendChild(todoTitle);
+      todoInfo.appendChild(todoMeta);
+      
+      // Create todo actions
+      const todoActions = document.createElement('div');
+      todoActions.className = 'todo-actions';
+      
+      // Only show edit button for incomplete todos
+      if (!parseInt(todo.completed)) {
+        const editBtn = document.createElement('button');
+        editBtn.innerHTML = '&#9998;'; // Pencil symbol
+        editBtn.title = 'Edit';
+        editBtn.addEventListener('click', () => editTodo(todo));
+        todoActions.appendChild(editBtn);
+      }
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.innerHTML = '&#10006;'; // X symbol
+      deleteBtn.title = 'Delete';
+      deleteBtn.addEventListener('click', () => deleteTodo(todo.id));
+      
+      todoActions.appendChild(deleteBtn);
+      
+      todoElement.appendChild(checkboxContainer);
+      todoElement.appendChild(todoInfo);
+      todoElement.appendChild(todoActions);
+      
+      return todoElement;
+    }
+
+    // Helper function to get priority label
+    function getPriorityLabel(priority) {
+      switch (parseInt(priority)) {
+        case 0: return 'Immediate';
+        case 1: return 'High';
+        case 2: return 'Medium';
+        case 3: return 'Low';
+        default: return 'Low';
+      }
+    }
+
+    // Helper function to get priority class
+    function getPriorityClass(priority) {
+      switch (parseInt(priority)) {
+        case 0: return 'immediate-priority';
+        case 1: return 'high-priority';
+        case 2: return 'medium-priority';
+        case 3: return 'low-priority';
+        default: return 'low-priority';
+      }
+    }
+
+    // Helper function to format date and time
+    function formatDateTime(dateString, timeString) {
+      if (!dateString) return 'No due date';
+      
+      const now = new Date();
+      const today = new Date(now);
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      // Create date object from date and time
+      const dueDate = new Date(dateString);
+      if (timeString) {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        dueDate.setHours(hours, minutes, 0, 0);
+      } else {
+        dueDate.setHours(17, 0, 0, 0); // Default to 5:00 PM
+      }
+      
+      // Format time portion
+      const timeFormat = new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+      const timeStr = timeFormat.format(dueDate);
+      
+      // Check if date is today or tomorrow
+      const dueDateOnly = new Date(dueDate);
+      dueDateOnly.setHours(0, 0, 0, 0);
+      
+      let dateStr;
+      if (dueDateOnly.getTime() === today.getTime()) {
+        dateStr = 'Today';
+      } else if (dueDateOnly.getTime() === tomorrow.getTime()) {
+        dateStr = 'Tomorrow';
+      } else {
+        dateStr = dueDate.toLocaleDateString();
+      }
+      
+      // Check if overdue
+      if (dueDate < now) {
+        return `Overdue: ${dateStr} at ${timeStr}`;
+      } else {
+        return `${dateStr} at ${timeStr}`;
+      }
+    }
+    
+    // Helper function to format due hours
+    function formatDueHours(dueHours) {
+      if (dueHours === undefined) {
+        return 'No deadline';
+      } else if (dueHours === -1) {
+        return 'Overdue';
+      } else if (dueHours === 0) {
+        return 'Due now';
+      } else if (dueHours <= 8) {
+        return `${dueHours} hour${dueHours > 1 ? 's' : ''} left`;
+      } else {
+        const days = Math.floor(dueHours / 8);
+        return `${days} work day${days > 1 ? 's' : ''} left`;
+      }
+    }
+
+    // Setup due date listeners to show/hide time input
+    function setupDueDateListeners() {
+      // For the main form
+      dueDate.addEventListener('change', function() {
+        if (this.value) {
+          dueTime.style.display = 'block';
+        } else {
+          dueTime.style.display = 'none';
+        }
+      });
+      
+      // For the edit form
+      editDueDate.addEventListener('change', function() {
+        if (this.value) {
+          editDueTime.style.display = 'block';
+        } else {
+          editDueTime.style.display = 'none';
+        }
+      });
+      
+      // Initial check for edit form - show time input if date is already set
+      document.addEventListener('DOMContentLoaded', function() {
+        // For the main form
+        if (dueDate.value) {
+          dueTime.style.display = 'block';
+        }
+      });
+    }
+    
+    // Helper function to show/hide loading message
+    function showLoading(show) {
+      loadingMessage.style.display = show ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>
